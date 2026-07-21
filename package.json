@@ -1,0 +1,25 @@
+{
+  "name": "statlo",
+  "version": "0.1.0",
+  "description": "An MLB player-prop modeling framework: expected-stats-driven probability models, a frozen-prediction accuracy loop, and a resumable backtest harness.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --max-old-space-size=4096 server.js",
+    "test": "echo \"No test suite yet\" && exit 0"
+  },
+  "keywords": [
+    "mlb",
+    "baseball",
+    "statcast",
+    "sabermetrics",
+    "modeling",
+    "backtesting",
+    "calibration"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1",
+    "node-cron": "^4.2.1"
+  }
+}

@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------------------
+# Secrets / local config — NEVER commit. Copy the .example files and fill in.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+*-config.local.js
+.claude/
+
+# ---------------------------------------------------------------------------
+# Generated model output. This project is deliberately shipped WITHOUT data:
+# the framework is public, the gathered data and any tuned edges are not.
+# ---------------------------------------------------------------------------
+predictions-*.json
+calibration-history.json
+*-log-*.json
+hr-log-*.json
+streaks-log-*.json
+underrated-log-*.json
+email-sent-*.marker
+
+# API response cache (can reach hundreds of MB)
+cache/
+
+# Backtest checkpoint caches — these embed gathered data
+backtests/*-cache.json
+backtests/*.txt
+
+# ---------------------------------------------------------------------------
+# Standard
+# ---------------------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-error.log*
+*.bak
+*.bak-*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.tmp
+*.tmp[0-9]*
