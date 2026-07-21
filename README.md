@@ -92,14 +92,9 @@ gitignored.
 
 ## What's deliberately NOT here
 
-This is extracted from a larger private project. Three things were removed on purpose:
-
-- **No betting, odds, or EV layer.** No sportsbook integrations, no market-edge computation, no
-  ROI or closing-line tracking, no parlay construction. This projects player outcomes; it does not
-  price them against a market.
 - **No tuned constants.** Every inclusion floor, gate threshold, and sensitivity weight is a
-  clearly-marked neutral **placeholder** (see the banner at the top of `lib/probabilities.js`). The
-  published constants are *structure*, not a calibrated model. Derive your own — a threshold fitted
+  clearly-marked neutral **placeholder** (see the banner at the top of `lib/probabilities.js`). 
+The published constants are *structure*, not a calibrated model. Derive your own — a threshold fitted
   to someone else's data is worse than no threshold, because it looks authoritative while encoding
   a population you never observed.
 - **No gathered data.** No prediction history, no calibration history, no caches. The repo starts
