@@ -15,6 +15,10 @@ const { getLeagueStreaks, recordStreaksLog } = require('./lib/streaks');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// This build is MLB-only, so mlb.html IS the app — serve it at '/' directly rather than
+// expecting an index.html (the original multi-sport hub page it would otherwise fall back to
+// isn't included here, since every other sport was intentionally left out of this extraction).
+app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'mlb.html')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(require('./routes'));
 
