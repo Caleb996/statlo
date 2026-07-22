@@ -986,13 +986,107 @@ router.get('/api/accuracy', async (req, res) => {
       };
     }).filter(e => e.tbThreshold !== null);
 
-    // Game-level moneyline results — joined against the book line snapshotted
-    // compared to the book's OWN favorite and which one actually won.
-    //
-    // NOTE: mkt.pickSide/pickAbbrev (from computeEdge) are OUR pick graded against
-    // but NOT the book's favorite. mkt.homeFair/awayFair are the only side-neutral
-    // fields here, so the book's actual favorite must be derived from those directly
-    // (whichever side has the higher de-vigged fair probability).
+    const dueHitResults = (saved.dueHit || []).map(e => {
+      const actual = actualStats[e.batterId];
+      const dnp    = !actual && fetchedGamePks.has(e.gamePk);
+      return {
+        name: e.batter, team: e.team, batterId: e.batterId, gamePk: e.gamePk,
+        hitlessAbs: e.hitlessAbs, seasonAvg: e.seasonAvg, prob: e.prob,
+        won: actual ? actual.h > 0 : null, dnp,
+      };
+    });
+
+    const dueHrResults = (saved.dueHr || []).map(e => {
+      const actual = actualStats[e.batterId];
+      const dnp    = !actual && fetchedGamePks.has(e.gamePk);
+      return {
+        name: e.batter, team: e.team, batterId: e.batterId, gamePk: e.gamePk,
+        absSinceHr: e.absSinceHr, expectedAbsPerHr: e.expectedAbsPerHr, multiple: e.multiple,
+        won: actual ? actual.hr >= 1 : null, dnp,
+      };
+    });
+
+    // ---------------------------------------------------------------------------
+    // Observational-only grading — Cy Old, per-game streak tags, league-wide Streaks
+    // board. None of these feed `calibration` / recomputeCorrectionFactors; they're their
+    // own response keys + their own sibling entries in calibration-history.json, same
+    // treatment as runTotalAccuracy/spProjectedKAccuracy above.
+    // ---------------------------------------------------------------------------
+    function winRate(results) {
+      const decided = results.filter(r => r.won != null);
+      if (!decided.length) return { n: 0 };
+      const wins = decided.filter(r => r.won).length;
+      return { n: decided.length, wins, rate: +(wins / decided.length).toFixed(3) };
+    }
+
+    // Cy Old — flag "holds up" if the pitcher failed to record a quality start (IP>=6,
+    // ER<=3) that day, same QS definition used everywhere else in this app.
+    const cyOldResults = (saved.cyOld || []).map(e => {
+      const actual = actualPitcherStats[e.id];
+      const dnp    = !actual && fetchedGamePks.has(e.gamePk);
+      const won    = actual ? !(actual.ip >= 6 && actual.er <= 3) : null;
+      return {
+        name: e.name, team: e.team, opponent: e.opponent, pitcherId: e.id, gamePk: e.gamePk,
+        seasonFip: e.seasonFip, trailingFip: e.trailingFip, reason: e.reason,
+        actualIp: actual?.ip ?? null, actualEr: actual?.er ?? null,
+        won, dnp,
+      };
+    });
+    const cyOldAccuracy = winRate(cyOldResults);
+
+    // Per-game Notable Runs/Who Sucks tags, frozen slate-wide (saveStreakTagPredictions).
+    // "won" = the flag held up: hot batter -> got a hit; cold batter -> didn't; hot pitcher
+    // -> quality start; cold pitcher -> not a quality start.
+    function gradeStreakTags(list, wantHot) {
+      return (list || []).map(e => {
+        let actualFact = null, dnp = false;
+        if (e.type === 'batter') {
+          const actual = actualStats[e.batterId];
+          dnp = !actual && fetchedGamePks.has(e.gamePk);
+          actualFact = actual ? actual.h > 0 : null;
+        } else {
+          const actual = actualPitcherStats[e.pitcherId];
+          dnp = !actual && fetchedGamePks.has(e.gamePk);
+          actualFact = actual ? (actual.ip >= 6 && actual.er <= 3) : null;
+        }
+        const won = actualFact == null ? null : (wantHot ? actualFact : !actualFact);
+        return { ...e, won, dnp };
+      });
+    }
+    const streakTagHotResults  = gradeStreakTags(saved.streakTagsHot,  true);
+    const streakTagColdResults = gradeStreakTags(saved.streakTagsCold, false);
+    const streakTagAccuracy = winRate([...streakTagHotResults, ...streakTagColdResults]);
+
+    // League-wide Streaks board (lib/streaks.js) — same won-semantics as above, entries
+    // use `id` (not batterId/pitcherId) and are already split into 4 typed arrays.
+    function gradeStreaksBoardList(list, wantHot, isPitcher) {
+      return (list || []).map(e => {
+        let actualFact = null, dnp = false;
+        if (isPitcher) {
+          const actual = actualPitcherStats[e.id];
+          dnp = !actual && fetchedGamePks.has(e.gamePk);
+          actualFact = actual ? (actual.ip >= 6 && actual.er <= 3) : null;
+        } else {
+          const actual = actualStats[e.id];
+          dnp = !actual && fetchedGamePks.has(e.gamePk);
+          actualFact = actual ? actual.h > 0 : null;
+        }
+        const won = actualFact == null ? null : (wantHot ? actualFact : !actualFact);
+        return { ...e, won, dnp };
+      });
+    }
+    const sbSaved = saved.streaksBoard || {};
+    const streaksBoardResults = {
+      battersHot:   gradeStreaksBoardList(sbSaved.battersHot,   true,  false),
+      battersCold:  gradeStreaksBoardList(sbSaved.battersCold,  false, false),
+      pitchersHot:  gradeStreaksBoardList(sbSaved.pitchersHot,  true,  true),
+      pitchersCold: gradeStreaksBoardList(sbSaved.pitchersCold, false, true),
+    };
+    const streaksBoardAccuracy = winRate([
+      ...streaksBoardResults.battersHot, ...streaksBoardResults.battersCold,
+      ...streaksBoardResults.pitchersHot, ...streaksBoardResults.pitchersCold,
+    ]);
+
     appendCalibrationEntry(date, calibration, gamePks.length, runTotalAccuracy, spProjectedKAccuracy,
       cyOldAccuracy, streakTagAccuracy, streaksBoardAccuracy);
     res.json({
