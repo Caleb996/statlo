@@ -138,4 +138,10 @@ aggressively (this repo does) and don't hammer public endpoints.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Copyright (c) 2026 Caleb996.
+
+This program is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License, version 3, as published by the Free Software Foundation. It is
+distributed WITHOUT ANY WARRANTY. See [LICENSE](LICENSE) for the full text.
+
+Versions published before this change were released under the MIT License.
