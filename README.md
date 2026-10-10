@@ -141,7 +141,9 @@ aggressively (this repo does) and don't hammer public endpoints.
 Copyright (c) 2026 Caleb996.
 
 This program is free software: you can redistribute it and/or modify it under the terms of the
-GNU General Public License, version 3, as published by the Free Software Foundation. It is
-distributed WITHOUT ANY WARRANTY. See [LICENSE](LICENSE) for the full text.
+GNU Affero General Public License, version 3, as published by the Free Software Foundation.
+If you run a modified version as a network service, you must make your modified source
+available to its users. It is distributed WITHOUT ANY WARRANTY. See [LICENSE](LICENSE) for
+the full text.
 
 Versions published before this change were released under the MIT License.
